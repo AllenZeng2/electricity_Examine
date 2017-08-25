@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dlxj.dao.RemovedefectDao">
+	<!-- 查询消缺任务列表(制定与分配) -->
+	<select id="getRemovedefect1" parameterType="map" resultMap="removedefect">
+		select rrr.* from 
+		(select r.*,rownum rr from removedefect r 
+		where (rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)=1
+		) or rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)>1
+		))  and r.task_del=0 
+			<if test="rc.task_number!=null and rc.task_number!=''"> 
+				and TASK_NUMBER like '%'||#{rc.task_number}||'%' 
+			</if> 
+			<if test="rc.task_status!=null and rc.task_status!='' and rc.task_status!=0">
+				and TASK_STATUS=#{rc.task_status} 
+			</if>
+			<if test="rc.user_id!=null and rc.user_id!=''"> 
+				and GIVEPERSON_NAME like '%'||#{rc.user_id}||'%' 
+			</if>
+			<if test="rc.task_begintime!=null and rc.task_begintime!=''"> 
+				and TASK_BEGINTIME >= to_date( #{rc.task_begintime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+			<if test="rc.task_endtime!=null and rc.task_endtime!=''"> 
+				and TASK_BEGINTIME &lt;= to_date( #{rc.task_endtime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+		order by task_id desc) rrr
+		where rrr.rr &gt; #{pi.limit1} and rrr.rr &lt;= #{pi.limit2}
+	</select>
+	
+	<!-- 查询消缺任务列表count(制定与分配) -->
+	<select id="getRemovedefectCount1" parameterType="map" resultType="int">
+		select count(1) from removedefect r 
+		where (rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)=1
+		) or rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)>1
+		)) and r.task_del=0 
+			<if test="rc.task_number!=null and rc.task_number!=''"> 
+				and TASK_NUMBER like '%'||#{rc.task_number}||'%' 
+			</if> 
+			<if test="rc.task_status!=null and rc.task_status!='' and rc.task_status!=0">
+				and TASK_STATUS=#{rc.task_status} 
+			</if>
+			<if test="rc.user_id!=null and rc.user_id!=''"> 
+				and GIVEPERSON_NAME like '%'||#{rc.user_id}||'%' 
+			</if>
+			<if test="rc.task_begintime!=null and rc.task_begintime!=''"> 
+				and TASK_BEGINTIME >= to_date( #{rc.task_begintime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+			<if test="rc.task_endtime!=null and rc.task_endtime!=''"> 
+				and TASK_BEGINTIME &lt;= to_date( #{rc.task_endtime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+	</select>
+	
+	<!-- 查询消缺任务列表(执行与回执) -->
+	<select id="getRemovedefect2" parameterType="map" resultMap="removedefect">
+		select rrr.* from 
+		(select r.*,l.line_number,rownum rr from removedefect r inner join line l on r.line_id=l.line_id
+     where
+     (r.rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)=1
+		) or r.rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)>1
+		))  and
+      r.task_del=0 and r.task_status !=1
+			<if test="rc.task_number!=null and rc.task_number!=''"> 
+				and TASK_NUMBER like '%'||#{rc.task_number}||'%' 
+			</if> 
+			<if test="rc.line_name!=null and rc.line_name!=''">
+				and l.line_name like '%'||#{rc.line_name}||'%'
+			</if>
+			<if test="rc.user_id!=null and rc.user_id!=''"> 
+				and GIVEPERSON_NAME like '%'||#{rc.user_id}||'%' 
+			</if>
+			<if test="rc.task_begintime!=null and rc.task_begintime!=''"> 
+				and TASK_BEGINTIME >= to_date( #{rc.task_begintime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+			<if test="rc.task_endtime!=null and rc.task_endtime!=''"> 
+				and TASK_BEGINTIME &lt;= to_date( #{rc.task_endtime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+		order by task_id desc) rrr
+		where rrr.rr &gt; #{pi.limit1} and rrr.rr &lt;= #{pi.limit2}
+	</select>
+	
+	<!-- 查询消缺任务列表count(执行与回执) -->
+	<select id="getRemovedefectCount2" parameterType="map" resultType="int">
+		select count(1) from removedefect r inner join line l on r.line_id=l.line_id
+     where
+     (r.rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)=1
+		) or r.rowid in(
+		select max(rowid) from removedefect group by task_number having count(1)>1
+		))  and
+      r.task_del=0 and r.task_status!=1
+			<if test="rc.task_number!=null and rc.task_number!=''"> 
+				and TASK_NUMBER like '%'||#{rc.task_number}||'%' 
+			</if> 
+			<if test="rc.line_name!=null and rc.line_name!=''">
+				and l.line_name like '%'||#{rc.line_name}||'%'
+			</if>
+			<if test="rc.user_id!=null and rc.user_id!=''"> 
+				and GIVEPERSON_NAME like '%'||#{rc.user_id}||'%' 
+			</if>
+			<if test="rc.task_begintime!=null and rc.task_begintime!=''"> 
+				and TASK_BEGINTIME >= to_date( #{rc.task_begintime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+			<if test="rc.task_endtime!=null and rc.task_endtime!=''"> 
+				and TASK_BEGINTIME &lt;= to_date( #{rc.task_endtime} ,'yyyy-MM-dd hh24:mi:ss')
+			</if>
+	</select>
+	
+	<!-- 查看消缺任务 -->
+	<select id="selectTaskByNumber" parameterType="string" resultMap="removedefect">
+		select * from removedefect r inner join (
+		select re.*,p.pole_number pp from receipt re inner join pole p on p.pole_id=re.pole_id) rr 
+		on pp=r.receiptids 
+ 		inner join line l on r.line_id=l.line_id 
+ 		inner join defect d on rr.defect_id=d.defect_id
+		where r.task_number=#{task_number}
+ 		and rr.receipt_type=0 and rr.defect_id>1
+	</select>
+	
+	<!-- 查有缺陷的线路 -->
+	<select id="getRemovedefectLines" resultMap="line">
+	select distinct l.line_name,l.line_number from receipt r 
+inner join pole pp on r.pole_id=pp.pole_id 
+inner join line l on pp.line_id=l.line_id
+inner join defect d on r.defect_id=d.defect_id
+
+ where r.receipt_id not in(
+select receipt_id from removedefect r inner join(
+select re.*,p.pole_number pp from receipt re 
+inner join pole p on re.pole_id=p.pole_id where re.receipt_type=0) rp 
+on r.receiptids=pp where r.task_begintime=rp.task_begaindate )
+and r.receipt_type=0 and r.defect_id>1
+	</select>
+	
+	<select id="getRemovedefectUser" resultMap="users">
+		select * from users where user_state=0 and user_del=0 and role_id=6
+	</select>
+	
+	<!-- 制定消缺任务 -->
+	<select id="makeRemovedefect" parameterType="string" resultMap="receipt">	
+		select * from receipt r 
+inner join pole pp on r.pole_id=pp.pole_id 
+inner join line l on pp.line_id=l.line_id
+inner join defect d on r.defect_id=d.defect_id
+
+ where r.receipt_id not in(
+select receipt_id from removedefect r inner join(
+select re.*,p.pole_number pp from receipt re 
+inner join pole p on re.pole_id=p.pole_id where re.receipt_type=0) rp 
+on r.receiptids=pp where r.task_begintime=rp.task_begaindate )
+and r.receipt_type=0 and r.defect_id>1 and l.line_number=#{line_number}
+	</select>
+	<insert id="addRemovedefect" parameterType="Removedefect" >
+		insert into removedefect values(sq_removedefect.nextval,#{task_name},#{task_desc},#{task_status},
+		sysdate,to_date(#{task_endtime},'yyyy-MM-dd hh24:mi:ss'),#{giveperson_name},#{xqperson_name},#{line_id},
+		#{receiptids},0,null,null,#{task_number})
+	</insert>
+	
+	<!-- 分配/修改消缺任务 -->
+	<update id="setXQPerson" parameterType="Removedefect">
+		update removedefect
+		<set>
+			<if test="xqperson_name!=null">
+				xqperson_name=#{xqperson_name}, 
+			</if>
+			<if test="task_desc!=null">
+				task_desc=#{task_desc}
+			</if>
+			task_status=2
+		
+		</set>
+		 where task_number=#{task_number}
+	</update>
+	
+	<!-- 取消任务 -->
+	<update id="delRemovedefect" parameterType="string">
+		update removedefect set task_del=1 where task_number=#{task_number}
+	</update>
+	
+	<!-- 执行任务 -->
+	<update id="executeRemovedefect" parameterType="string">
+		update removedefect set task_status=3 where task_number=#{task_number}
+	</update>
+	
+	<!-- 完成任务 -->
+	<update id="completeRemovedefect" parameterType="string">
+		update removedefect set task_status=4,update_time=sysdate where task_number=#{task_number}
+	</update>
+	
+	<!-- 回执录入保存 -->
+
+	
+	<select id="selectReceipt" parameterType="string" resultType="removedefect" >
+		select * from removedefect where task_number=#{task_number}
+	</select>
+	
+	<insert id="insertReceipt" parameterType="removedefect">
+
+	
+
+		 	insert into receipt 
+values (sq_receipt.nextval,
+ (select defect_id from receipt r where r.receipt_type=0 and r.pole_id =
+(select pole_id from pole where pole_number = #{receiptids})),
+ (select pole_id from receipt r where r.receipt_type=0 and r.pole_id =
+(select pole_id from pole where pole_number = #{receiptids})), 
+#{xqperson_name},
+ (select find_date from receipt r where r.receipt_type=0 and r.pole_id =
+(select pole_id from pole where pole_number = #{receiptids})), 
+(select defect_desc from receipt r where r.receipt_type=0 and r.pole_id =
+(select pole_id from pole where pole_number = #{receiptids})), 
+(select defect_level from receipt r where r.receipt_type=0 and r.pole_id =
+(select pole_id from pole where pole_number = #{receiptids})), 
+null, 
+(select req from receipt r where r.receipt_type=0 and r.pole_id =
+(select pole_id from pole where pole_number = #{receiptids})),
+ #{task_id}, 
+ (select line_number from receipt r where r.receipt_type=0 and r.pole_id =
+(select pole_id from pole where pole_number = #{receiptids})), 
+to_date(#{task_begintime},'yyyy-MM-dd hh24:mi:ss'), 0, 1, #{giveperson_name})
+	
+	</insert>
+	
+	<!-- 消缺查询 -->
+	<select id="selectRemovedefect" parameterType="map" resultMap="removedefect">
+		select * from (
+		select rrr.*,rownum ro from (
+		select * from removedefect r inner join (
+		select re.*,p.pole_number pp from receipt re inner join pole p on p.pole_id=re.pole_id
+		where re.receipt_type=0) rr on
+		pp=r.receiptids 
+		inner join defect d on rr.defect_id=d.defect_id
+		 where r.task_del=0 
+			<if test="task_number!=null and task_number!=''"> 
+				and r.TASK_NUMBER like '%'||#{task_number}||'%' 
+			</if> 
+			<if test="defect_id!=null and defect_id!='' and defect_id>0">
+				and rr.defect_id=#{defect_id}
+			</if>
+		order by r.task_status desc,r.task_begintime desc ) rrr) re
+		where re.ro &gt; #{pi.limit1} and re.ro &lt;= #{pi.limit2}
+	</select>
+	
+	<!-- 消缺count查询 -->
+	<select id="selectRemovedefectCount" parameterType="map" resultType="int">
+		
+		select count(1) from removedefect r inner join (
+		select re.*,p.pole_number pp from receipt re inner join pole p on p.pole_id=re.pole_id
+		where re.receipt_type=0) rr on
+		pp=r.receiptids 
+		inner join defect d on rr.defect_id=d.defect_id
+		 where r.task_del=0 
+			<if test="task_number!=null and task_number!=''"> 
+				and r.TASK_NUMBER like '%'||#{task_number}||'%' 
+			</if> 
+			<if test="defect_id!=null and defect_id!='' and defect_id>0">
+				and rr.defect_id=#{defect_id}
+			</if>
+		
+	</select>
+	
+	<!-- 获得缺陷 -->
+	<select id="getDefects" resultMap="defect">
+		select * from defect where defect_id>1 and defect_del=0
+	</select>
+	
+
+	<resultMap type="Removedefect" id="removedefect">
+		<id property="task_id" column="TASK_ID"/>
+		<result property="task_name" column="TASK_NAME"/>
+		<result property="task_desc" column="TASK_DESC"/>
+		<result property="task_status" column="TASK_STATUS"/>
+		<result property="task_begintime" column="TASK_BEGINTIME"/>
+		<result property="task_endtime" column="TASK_ENDTIME"/>
+		<result property="giveperson_name" column="GIVEPERSON_NAME"/>
+		<result property="xqperson_name" column="XQPERSON_NAME"/>
+		<result property="line_id" column="LINE_ID"/>
+		<result property="receiptids" column="RECEIPTIDS"/>
+		<result property="task_del" column="TASK_DEL"/>
+		<result property="update_time" column="UPDATE_TIME"/>
+		<result property="finish_desc" column="FNISH_DESC"/>
+		<result property="task_number" column="TASK_NUMBER"/>
+		<association property="line" javaType="Line" resultMap="line"></association>
+		<association property="receipt" javaType="Receipt" resultMap="receipt"></association>
+		
+	</resultMap>
+	<resultMap type="Line" id="line">
+		<id property="lineId" column="LINE_ID" />
+		<result property="lineNumber" column="LINE_NUMBER" />
+		<result property="lineName" column="LINE_NAME" />
+		<result property="lineLength" column="LINE_LENGTH" />
+		<result property="lineDate" column="LINE_DATE" />
+		<result property="lineVoltage" column="LINE_VOLTAGE" />
+		<result property="lineStatic" column="LINE_STATIC" />
+		<result property="lineRemark" column="LINE_REMARK" />
+		<result property="poleStar" column="POLE_STAR" />
+		<result property="poleStop" column="POLE_STOP" />
+		<result property="lineState" column="LINE_STATE" />
+		<result property="length" column="LENGTH" />
+		<result property="lineDel" column="LINE_DEL" />
+		<result property="lineCreatedate" column="LINE_CREATEDATE" />
+	</resultMap>
+
+	<resultMap type="Receipt" id="receipt">
+		<id property="receipt_id" column="RECEIPT_ID" />
+		<result property="defect_id" column="DEFECT_ID" />
+		<result property="pole_id" column="POLE_ID" />
+		<result property="find_username" column="FIND_USERNAME" />
+		<result property="find_date" column="FIND_DATE" />
+		<result property="defect_desc" column="DEFECT_DESC" />
+		<result property="defect_level" column="DEFECT_LEVEL" />
+		<result property="task_id" column="TASK_ID" />
+		<result property="req" column="REQ" />
+		<result property="remove_id" column="REMOVE_ID" />
+		<result property="line_number" column="LINE_NUMBER" />
+		<result property="task_begaindate" column="TASK_BEGAINDATE" />
+		<result property="task_state" column="TASK_STATE" />
+		<result property="receipt_type" column="RECEIPT_TYPE" />
+		<result property="giveusername" column="GIVEUSERNAME" />
+		<association property="pole" javaType="Pole" resultMap="pole"></association>
+		<association property="defects" javaType="Defect" resultMap="defect"></association>
+	</resultMap>
+	<resultMap type="Pole" id="pole">
+		<id property="POLE_ID" column="POLE_ID" />
+		<result property="POLE_NUMBER" column="POLE_NUMBER" />
+	</resultMap>
+	<resultMap type="Defect" id="defect">
+		<id property="DEFECT_ID" column="DEFECT_ID" />
+		<result property="DEFECT_NAME" column="DEFECT_NAME" />
+		<result property="DEFECT_STATE" column="DEFECT_STATE" />
+	</resultMap>
+	<resultMap type="Users" id="users">
+		<id property="USER_ID" column="USER_ID" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="ROLE_ID" column="ROLE_ID" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_NAME" column="USER_NAME" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_LOGINNAME" column="USER_LOGINNAME"
+			jdbcType="VARCHAR" javaType="String" />
+		<result property="USER_PASSWORD" column="USER_PASSWORD"
+			jdbcType="VARCHAR" javaType="String" />
+		<result property="USER_INTIME" column="USER_INTIME" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_OUTTIME" column="USER_OUTTIME" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_STATE" column="USER_STATE" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_LOGINTIME" column="USER_LOGINTIME"
+			jdbcType="VARCHAR" javaType="String" />
+		<result property="USER_EMAIL" column="USER_EMAIL" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_REMARK" column="USER_REMARK" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_AGE" column="USER_AGE" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_PHONE" column="USER_PHONE" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_SEX" column="USER_SEX" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_DEL" column="USER_DEL" jdbcType="INTEGER"
+			javaType="Integer" />
+		
+	</resultMap>
+</mapper>

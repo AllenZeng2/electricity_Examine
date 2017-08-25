@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dlxj.dao.DefectDao">
+	<select id="getDefects" parameterType="map" resultType="Defect">
+		select dd.* from(
+		select de.*,ROWNUM R
+		from (select d.* from DEFECT d
+		where DEFECT_DEL=0
+		<if test="dname!=null and dname!=''">
+			and DEFECT_NAME like '%'||#{dname}||'%'
+		</if>
+		order by
+		DEFECT_ID desc) de ) dd
+		where R &gt; #{pi.limit1} and R &lt;=
+		#{pi.limit2}
+	</select>
+	<select id="getReceipts" parameterType="map" resultMap="receipt">
+		select ww.* from (
+		select de.*,rownum R
+		from (select
+		t.*,ta.task_number,p.pole_number,d.defect_name
+		from RECEIPT t inner
+		join
+		task ta on ta.task_id=t.task_id inner join
+		pole p on
+		p.pole_id=t.pole_id inner join defect d on
+		d.defect_id=t.defect_id
+		where
+		t.TASK_STATE=0 and t.req=0 and t.receipt_type=0
+		<if test="task_number!=null and task_number!=''">
+			and ta.task_number like '%'||#{task_number}||'%'
+		</if>
+		<if test="line_number!=null and line_number!=''">
+			and t.LINE_NUMBER like '%'||#{line_number}||'%'
+		</if>
+		order by
+		t.FIND_DATE desc) de ) ww
+		where R &gt; #{pi.limit1} and R &lt;=
+		#{pi.limit2}
+	</select>
+
+	<select id="getDefectName" parameterType="string" resultMap="defect">
+		select d.* from DEFECT d where d.DEFECT_NAME=#{_parameter}
+	</select>
+
+	<select id="getDefectsCount" parameterType="string" resultType="int">
+		select count(1) from DEFECT where DEFECT_DEL=0
+		<if test="_parameter!=null and _parameter!=''">
+			and DEFECT_NAME like '%'||#{_parameter}||'%'
+		</if>
+	</select>
+	<select id="getReceiptsCount" parameterType="map" resultType="int">
+		select count(1)
+		from (select t.*,ta.task_number from RECEIPT t inner
+		join
+		task ta on ta.task_id=t.task_id where t.TASK_STATE=0 and t.req=0
+		and t.receipt_type=0
+		<if test="task_number!=null and task_number!=''">
+			and ta.task_number like '%'||#{task_number}||'%'
+		</if>
+		<if test="line_number!=null and line_number!=''">
+			and t.LINE_NUMBER like '%'||#{line_number}||'%'
+		</if>
+		order by
+		t.FIND_DATE desc) de
+	</select>
+	<insert id="addDefect" parameterType="Defect">
+		insert into defect
+		values(sq_defect.nextval,#{DEFECT_NAME},#{DEFECT_STATE},0)
+
+	</insert>
+	<update id="deleteDefect" parameterType="int">
+		update defect d set
+		d.defect_del=1 where d.defect_id=#{defect_id}
+	</update>
+	<select id="getDefect" parameterType="int" resultMap="defect">
+		select d.*
+		from DEFECT d where d.DEFECT_ID=#{defect_id}
+	</select>
+	<update id="updateDefect" parameterType="Defect">
+		update defect d set
+		d.defect_name=#{DEFECT_NAME},d.defect_state=#{DEFECT_STATE} where
+		d.defect_id=#{DEFECT_ID}
+	</update>
+	<update id="saveDefectLevel" parameterType="map">
+		update receipt d set
+		d.defect_level=#{defect_level} , d.REQ=1 where
+		d.pole_id=#{pole_id}
+	</update>
+
+	<resultMap type="Receipt" id="receipt">
+		<id property="receipt_id" column="RECEIPT_ID" />
+		<result property="defect_id" column="DEFECT_ID" />
+		<result property="pole_id" column="POLE_ID" />
+		<result property="find_username" column="FIND_USERNAME" />
+		<result property="find_date" column="FIND_DATE" />
+		<result property="defect_desc" column="DEFECT_DESC" />
+		<result property="defect_level" column="DEFECT_LEVEL" />
+		<result property="task_id" column="TASK_ID" />
+		<result property="req" column="REQ" />
+		<result property="remove_id" column="REMOVE_ID" />
+		<result property="line_number" column="LINE_NUMBER" />
+		<result property="task_begaindate" column="TASK_BEGAINDATE" />
+		<result property="task_state" column="TASK_STATE" />
+		<result property="receipt_type" column="RECEIPT_TYPE" />
+		<result property="giveusername" column="GIVEUSERNAME" />
+		<association property="task" javaType="Task" resultMap="task"></association>
+		<association property="pole" javaType="Pole" resultMap="pole"></association>
+		<association property="defects" javaType="Defect"
+			resultMap="defect"></association>
+	</resultMap>
+	<resultMap type="Task" id="task">
+		<id property="TASK_ID" column="TASK_ID" />
+		<result property="TASK_NUMBER" column="TASK_NUMBER" />
+	</resultMap>
+	<resultMap type="Pole" id="pole">
+		<id property="POLE_ID" column="POLE_ID" />
+		<result property="POLE_NUMBER" column="POLE_NUMBER" />
+	</resultMap>
+	<resultMap type="Defect" id="defect">
+		<id property="DEFECT_ID" column="DEFECT_ID" />
+		<result property="DEFECT_NAME" column="DEFECT_NAME" />
+		<result property="DEFECT_STATE" column="DEFECT_STATE" />
+	</resultMap>
+
+
+</mapper>

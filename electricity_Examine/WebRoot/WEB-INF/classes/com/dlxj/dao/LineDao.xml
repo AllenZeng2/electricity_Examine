@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dlxj.dao.LineDao">
+	<select id="getLineList" parameterType="Map" resultMap="line">
+
+		<!-- select * from (select * from line order by line_id) where line_id 
+			<![CDATA[>]]>#{pi.limit1} and line_id <![CDATA[<]]>#{pi.limit2} and line_name 
+			like '%' || #{con} || '%' -->
+
+
+		<!-- select * from ( select l.*,rownum r from line l where l.line_del= 
+			0 and l.line_name like '%' || #{con} || '%' order by l.line_id) ll where 
+			ll.r>#{pi.limit1} and ll.r&lt;#{pi.limit2} -->
+
+		select * from (select ll.*,rownum r from(select * from line l order by
+		line_id ) ll where ll.line_del=0 and ll.line_name like '%' || #{con}
+		|| '%')lll where lll.r &gt; #{pi.limit1} and lll.r &lt;= #{pi.limit2}
+
+	</select>
+
+	<select id="getCount" parameterType="String" resultType="Integer">
+
+		select count(1) from line where line_name like '%' || #{con} || '%' and
+		line_del=0
+
+	</select>
+
+	<insert id="addNewLine" parameterType="com.dlxj.entity.Line">
+
+		insert into LINE
+		(line_id, line_number, line_name, line_length, line_date, line_voltage,
+		line_static, line_remark, pole_star, pole_stop, line_state, length,
+		line_del, line_createdate)
+		values
+		(seq_line.nextval,#{lineNumber},
+		#{lineName},#{lineLength},
+		to_date(#{lineDate},'yyyy-MM-dd'),
+		#{lineVoltage},
+		#{lineStatic},#{lineRemark},
+		#{poleStar},#{poleStop},
+		#{lineState},#{length},
+		#{lineDel},to_date(#{lineCreatedate},'yyyy-MM-dd'))
+
+	</insert>
+
+
+	<update id="updateStatic" parameterType="map">
+		<!-- <if test="lineStatic==0">update line set line_static=1 where line_id 
+			= #{lineId}</if> <if test="lineStatic==1">update line set line_static=0 where 
+			line_id = #{lineId}</if> -->
+
+		update line set
+		<if test="lineStatic==0">
+			line_static=1
+		</if>
+		<if test="lineStatic==1">
+			line_static=0
+		</if>
+		where line_id = #{lineId}
+
+
+	</update>
+
+	<update id="jiaDel" parameterType="int">
+		update line set line_del=1 where line_id = #{lineId}
+
+	</update>
+
+
+
+
+	<select id="getLineById" parameterType="int" resultMap="line">
+		select *
+		from LINE where LINE_ID=#{lineId}
+	</select>
+
+	<select id="getLineByNumber" parameterType="String" resultMap="line">
+		select *
+		from LINE where LINE_NUMBER=#{lineNumber}
+	</select>
+
+	<select id="getdeTaskidByLineId" parameterType="int" resultType="int">
+		select TASK_ID from task where LINE_ID = #{lineId}
+	</select>
+
+	<update id="updateLine" parameterType="com.dlxj.entity.Line">
+		update line set line_number=#{lineNumber}	
+		,line_name = #{lineName}	
+		,line_length = #{lineLength}	
+		,line_date=to_date(#{lineDate},'yyyy-MM-dd  hh24:mi:ss')	
+		,line_voltage=#{lineVoltage} 	
+		,line_static=#{lineStatic}	
+		,line_remark=#{lineRemark}	
+		,pole_star=#{poleStar}	
+		,pole_stop=#{poleStop}	
+		,length=#{length}	
+		 where line_id = #{lineId} 		
+	</update>
+	
+	<select id="getLineByLineByName" parameterType="string" resultMap="line">
+		select * from LINE where LINE_NAME = #{lineName}
+	</select>
+
+
+	<resultMap type="Line" id="line">
+		<id property="lineId" column="LINE_ID" />
+		<result property="lineNumber" column="LINE_NUMBER" />
+		<result property="lineName" column="LINE_NAME" />
+		<result property="lineLength" column="LINE_LENGTH" />
+		<result property="lineDate" column="LINE_DATE" jdbcType="DATE"/>
+		<result property="lineVoltage" column="LINE_VOLTAGE" />
+		<result property="lineStatic" column="LINE_STATIC" />
+		<result property="lineRemark" column="LINE_REMARK" />
+		<result property="poleStar" column="POLE_STAR" />
+		<result property="poleStop" column="POLE_STOP" />
+		<result property="lineState" column="LINE_STATE" />
+		<result property="length" column="LENGTH" />
+		<result property="lineDel" column="LINE_DEL" />
+		<result property="lineCreatedate" column="LINE_CREATEDATE" />
+		
+	</resultMap>
+
+</mapper>
+
+
+
+
+

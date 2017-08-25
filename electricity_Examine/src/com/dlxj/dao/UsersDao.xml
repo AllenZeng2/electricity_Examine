@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dlxj.dao.UsersDao">
+	<update id="updateMsg" parameterType="Users">
+		update users set
+		role_id=#{ROLE_ID},user_name=#{USER_NAME},user_loginname=#{USER_LOGINNAME},user_password=#{USER_PASSWORD},user_intime=to_date(#{USER_INTIME},'yyyy-mm-dd'),user_state=#{USER_STATE},user_email=#{USER_EMAIL},user_age=#{USER_AGE},user_phone=#{USER_PHONE},user_sex=#{USER_SEX}
+		where user_id=#{USER_ID}
+	</update>
+	<select id="getUserById" parameterType="int" resultType="Users">
+		select *
+		from users where user_id=#{id}
+	</select>
+	<select id="login" parameterType="map" resultMap="users">
+		select * from
+		users u inner join role r on u.role_id=r.role_id
+		inner join role_menu
+		rm on r.role_id=rm.role_id
+		inner join menu m on rm.menu_id=m.menu_id
+		where u.user_loginname=#{user_loginname} and
+		u.user_password=#{user_password}
+	</select>
+	<resultMap type="Users" id="users">
+		<id property="USER_ID" column="USER_ID" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="ROLE_ID" column="ROLE_ID" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_NAME" column="USER_NAME" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_LOGINNAME" column="USER_LOGINNAME"
+			jdbcType="VARCHAR" javaType="String" />
+		<result property="USER_PASSWORD" column="USER_PASSWORD"
+			jdbcType="VARCHAR" javaType="String" />
+		<result property="USER_INTIME" column="USER_INTIME" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_OUTTIME" column="USER_OUTTIME" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_STATE" column="USER_STATE" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_LOGINTIME" column="USER_LOGINTIME"
+			jdbcType="VARCHAR" javaType="String" />
+		<result property="USER_EMAIL" column="USER_EMAIL" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_REMARK" column="USER_REMARK" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_AGE" column="USER_AGE" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_PHONE" column="USER_PHONE" jdbcType="VARCHAR"
+			javaType="String" />
+		<result property="USER_SEX" column="USER_SEX" jdbcType="INTEGER"
+			javaType="Integer" />
+		<result property="USER_DEL" column="USER_DEL" jdbcType="INTEGER"
+			javaType="Integer" />
+		<association property="roles" javaType="Role" resultMap="role"></association>
+	</resultMap>
+	<resultMap type="Role" id="role">
+		<id property="ROLE_ID" column="ROLE_ID" />
+		<result property="ROLE_NAME" column="ROLE_NAME" />
+		<result property="ROLE_STATE" column="ROLE_STATE" />
+		<result property="ROLE_CREATETIME" column="ROLE_CREATETIME" />
+		<result property="ROLE_UPDATETIME" column="ROLE_UPDATETIME" />
+		<result property="ROLE_NUMBER" column="ROLE_NUMBER" />
+		<result property="ROLE_DEL" column="ROLE_DEL" />
+		<result property="USER_NAME" column="USER_NAME" />
+		<collection property="menus" resultMap="menu" ofType="Menu"></collection>
+	</resultMap>
+	<resultMap type="Menu" id="menu">
+		<id property="MENU_ID" column="MENU_ID" />
+		<result property="MENU_NAME" column="MENU_NAME" />
+		<result property="MENU_URL" column="MENU_URL" />
+		<result property="MENU_STATE" column="MENU_STATE" />
+		<result property="MENU_FATHERID" column="MENU_FATHERID" />
+		<result property="MENU_CREATETIME" column="MENU_CREATETIME" />
+		<result property="MENU_REMARK" column="MENU_REMARK" />
+		<result property="MENU_DEL" column="MENU_DEL" />
+		<result property="USER_NAME" column="USER_NAME" />
+	</resultMap>
+
+	<select id="getUserPage" parameterType="map" resultType="int">
+		select count(1) from users u inner
+		join role re on u.role_id=re.role_id
+		where u.user_del=0
+		<if test="state!=-1">
+			and user_state=#{state}
+		</if>
+		<if test="name!=null and name!=''">
+			and user_name like '%'||#{name}||'%'
+		</if>
+	</select>
+
+	<select id="getUserManage" parameterType="map" resultMap="users">
+
+		select * from (
+		select rownum ro,r.* from(
+		select * from users u inner
+		join role re on u.role_id=re.role_id where user_del=0
+		<if test="state!=-1">
+			and user_state=#{state}
+		</if>
+		<if test="name!=null and name!=''">
+			and u.user_name like '%'||#{name}||'%'
+		</if>
+		order by user_outtime desc)r)rr where rr.ro>#{pi.limit1} and
+		rr.ro&lt;=#{pi.limit2}
+	</select>
+	<select id="getUsersList" resultType="Role">
+		select * from role where
+		role_del=0
+	</select>
+	<select id="getStateById" parameterType="int" resultType="int">
+		select
+		user_state from users where user_id=#{id}
+	</select>
+	<update id="updateSdateById" parameterType="map">
+		update users set
+		user_state=#{state} where user_id=#{id}
+	</update>
+	<insert id="addUsers" parameterType="Users">
+		insert into users
+		values(sq_users.nextval,#{ROLE_ID},#{USER_NAME},#{USER_LOGINNAME},#{USER_PASSWORD},to_date(#{USER_INTIME},'yyyy-mm-dd'),'',#{USER_STATE},'',#{USER_EMAIL},'',#{USER_AGE},#{USER_PHONE},#{USER_SEX},0)
+	</insert>
+	<delete id="delUserById" parameterType="int">
+		update users set
+		user_del=1 where user_id=#{id}
+	</delete>
+	<select id="getUserByLoginName" parameterType="string"
+		resultType="Users">
+		select * from users where user_loginname=#{name}
+	</select>
+	<update id="updateSelf" parameterType="Users">
+		update users set
+		user_name=#{USER_NAME},user_sex=#{USER_SEX},user_age=#{USER_AGE},user_phone=#{USER_PHONE},user_email=#{USER_EMAIL}
+		<if test="USER_OUTTIME!=''">
+			,user_outtime=to_date(#{USER_OUTTIME},'yyyy-MM-dd
+			hh24:mi:ss')
+		</if>
+		where
+		user_id=#{USER_ID}
+	</update>
+	<update id="upPwd" parameterType="int">
+		update users set
+		user_password=#{pwd} where user_id=#{uid}
+	</update>
+	<insert id="savelog" parameterType="map">
+		insert into log
+		values(sq_log.nextval,'',#{uname},#{muname},sysdate)
+	</insert>
+
+
+	<select id="getUserLogPage" parameterType="map" resultType="int">
+		select count(1) from users u inner join log l on
+		u.user_name=l.log_username
+		where u.user_id=#{id}
+		<if test="log1!=null">
+			and log_date>to_date(#{log1},'yyyy-MM-dd hh24:mi:ss')
+		</if>
+		<if test="log2!=null">
+			and log_date&lt;to_date(#{log2},'yyyy-MM-dd hh24:mi:ss')
+		</if>
+	</select>
+	<select id="getLogManage" parameterType="map" resultType="Log">
+		select * from (
+		select rownum ro,r.* from(
+		select * from users u inner
+		join log l on u.user_name=l.log_username where u.user_id=${id}
+		<if test="log1!=null">
+			and log_date>to_date(#{log1},'yyyy-MM-dd hh24:mi:ss')
+		</if>
+		<if test="log2!=null">
+			and log_date&lt;to_date(#{log2},'yyyy-MM-dd hh24:mi:ss')
+		</if>
+		order by
+		log_date desc)r)rr where rr.ro>#{pi.limit1} and
+		rr.ro&lt;=#{pi.limit2}
+
+	</select>
+	<update id="updateLoginTime" parameterType="int">
+		update users set
+		user_logintime=sysdate where user_id=#{id}
+	</update>
+</mapper>

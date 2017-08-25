@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dlxj.dao.RoleDao">
+	<select id="getRoleWithMenuById" parameterType="int" resultMap="roles">
+		select * from role r inner join role_menu rm on r.role_id=rm.role_id
+		inner join menu m on rm.menu_id=m.menu_id
+		where r.role_id=#{id} and
+		m.menu_del=0
+	</select>
+	<resultMap type="Role" id="roles">
+		<id property="ROLE_ID" column="ROLE_ID" />
+		<result property="ROLE_NAME" column="ROLE_NAME" />
+		<result property="ROLE_STATE" column="ROLE_STATE" />
+		<result property="ROLE_CREATETIME" column="ROLE_CREATETIME" />
+		<result property="ROLE_UPDATETIME" column="ROLE_UPDATETIME" />
+		<result property="ROLE_NUMBER" column="ROLE_NUMBER" />
+		<result property="ROLE_DEL" column="ROLE_DEL" />
+		<result property="USER_NAME" column="USER_NAME" />
+		<collection property="menus" resultMap="menu" ofType="Menu"></collection>
+	</resultMap>
+	<resultMap type="Menu" id="menu">
+		<id property="MENU_ID" column="MENU_ID" />
+		<result property="MENU_NAME" column="MENU_NAME" />
+		<result property="MENU_URL" column="MENU_URL" />
+		<result property="MENU_STATE" column="MENU_STATE" />
+		<result property="MENU_FATHERID" column="MENU_FATHERID" />
+		<result property="MENU_CREATETIME" column="MENU_CREATETIME" />
+		<result property="MENU_REMARK" column="MENU_REMARK" />
+		<result property="MENU_DEL" column="MENU_DEL" />
+		<result property="USER_NAME" column="USER_NAME" />
+	</resultMap>
+
+	<select id="getAllRole" resultType="Role">
+		select * from role where
+		role_del=0 and role_state=0
+	</select>
+
+	<select id="getAllMenus" resultType="Menu">
+		select * from menu where
+		menu_del=0 and menu_state=0
+	</select>
+
+
+
+
+	<select id="getPage" parameterType="map" resultType="int">
+		select count(1) from role where ROLE_DEL=0 and ROLE_STATE=#{state}
+		<if test="name!=null and name!=''">
+			and role_name like '%'||#{name}||'%'
+		</if>
+	</select>
+	<select id="getRoles" parameterType="map" resultType="Role">
+		select * from (select rownum ro,r.* from(select * from role where
+		role_del=0 and role_state=#{state}
+		<if test="name!=null and name!=''">
+			and role_name like '%'||#{name}||'%'
+		</if>
+		order by role_createtime desc)r)rr where rr.ro>=#{pi.limit1} and
+		rr.ro&lt;=#{pi.limit2}
+
+	</select>
+
+	<select id="getRoleById" parameterType="int" resultType="Role">
+		select *
+		from role where role_id=#{id}
+	</select>
+	<update id="updateRoleMsg" parameterType="Role">
+		update role set
+		role_number=#{ROLE_NUMBER},role_name=#{ROLE_NAME},role_state=#{ROLE_STATE},role_updatetime=sysdate
+		where role_id=#{ROLE_ID}
+	</update>
+	<update id="delRoleById" parameterType="int">
+		update role set
+		role_del=1 where role_id=#{id}
+	</update>
+	<insert id="addRole" parameterType="Role">
+		insert into role values
+		(sq_role.nextval,#{ROLE_NAME},#{ROLE_STATE},sysdate,sysdate,#{ROLE_NUMBER},0,#{USER_NAME})
+	</insert>
+
+	<delete id="delRole_Menu" parameterType="int">
+		delete  from role_menu
+		where role_id=#{id}
+	</delete>
+	<insert id="insertRole_Menu" parameterType="map">
+		insert into role_menu values (#{id},#{menu},0)
+	</insert>
+	<select id="getUserByName" parameterType="string" resultType="Role">
+	select * from role where role_name=#{name}
+	</select>
+	<select id="getUserByNum" parameterType="string" resultType="Role">
+	select * from role where role_number=#{num}
+	</select>
+</mapper>

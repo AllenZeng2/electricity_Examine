@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dlxj.dao.MenuDao">
+	<select id="getMenuByName" parameterType="string" resultType="Menu">
+		select * from menu where menu_name=#{uname}
+	</select>
+	<select id="getPage" parameterType="string" resultType="int">
+		select count(1) from menu where MENU_DEL=0
+		<if test="_parameter!=null and _parameter!=''">
+			and MENU_NAME like '%'||#{_parameter}||'%'
+		</if>
+	</select>
+	<select id="getMenu" parameterType="map" resultType="Menu">
+		select * from (select rownum ro,r.* from(select * from menu where
+		menu_del=0
+		<if test="mname!=null and mname!=''">
+			and MENU_NAME like '%'||#{mname}||'%'
+		</if>
+		order by menu_createtime desc)r)rr where rr.ro>#{pi.limit1} and
+		rr.ro&lt;=#{pi.limit2}
+
+	</select>
+	<delete id="delMenuById" parameterType="int">
+		update menu set
+		menu_del=1 where menu_id=#{id}
+	</delete>
+	<select id="getMenusList" resultType="Menu">
+		select * from menu
+	</select>
+	<insert id="addMenu" parameterType="map">
+		insert into menu
+		values(sq_menu.nextval,#{menu_name},#{menu_url},#{menu_state},#{menu_fatherid},sysdate,#{menu_name},0,#{user_name})
+	</insert>
+	<select id="getMenuById" parameterType="int" resultType="Menu">
+		select *
+		from menu where menu_id=#{id}
+	</select>
+	<update id="UpdateMenu" parameterType="Menu">
+		update menu set
+		menu_name=#{MENU_NAME},menu_fatherid=#{MENU_FATHERID},menu_url=#{MENU_URL},menu_state=#{MENU_STATE}
+		where menu_id=#{MENU_ID}
+	</update>
+</mapper>

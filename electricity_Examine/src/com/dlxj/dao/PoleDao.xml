@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dlxj.dao.PoleDao">
+
+	<insert id="addPole" parameterType="com.dlxj.entity.Pole" >
+     
+     insert into pole values (seq_pole.nextval,#{LINE_ID},#{POLE_NUMBER},null)
+    
+	</insert>
+
+
+	<resultMap type="Pole" id="pole">
+		<id property="POLE_ID" column="POLE_ID"/>
+		<result property="LINE_ID" column="LINE_NUMBER"/>
+		<result property="LINE_NAME" column="LINE_NAME"/>
+		<result property="TASK_ID" column="TASK_ID"/>
+	</resultMap>
+
+</mapper>
+
+
+

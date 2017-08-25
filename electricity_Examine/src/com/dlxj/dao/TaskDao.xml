@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dlxj.dao.TaskDao">
+	<select id="getTasksCount" parameterType="map" resultType="int">
+		select count(1) from TASK where TASK_DEL=0
+		<if test="task_number!=null and task_number!=''">
+			and TASK_NUMBER like '%'||#{task_number}||'%'
+		</if>
+		<if test="task_state!=null and task_state!='' and task_state!=0">
+			and TASK_STATIC = #{task_state}
+		</if>
+	</select>
+	<select id="getTasksCountm2" parameterType="map" resultType="int">
+		select count(1) from TASK where TASK_DEL=0 and TASK_STATIC>1
+		<if test="task_number!=null and task_number!=''">
+			and TASK_NUMBER like '%'||#{task_number}||'%'
+		</if>
+		<if test="task_state!=null and task_state!='' and task_state!=0">
+			and TASK_STATIC = #{task_state}
+		</if>
+	</select>
+	<select id="getTasksCount3" parameterType="map" resultType="int">
+		select count(1)
+		from RECEIPT r
+		inner join
+		task t on t.task_id=r.task_id
+		inner join pole p on p.pole_id=r.pole_id
+		inner join defect d on
+		d.defect_id=r.defect_id
+		where r.receipt_type=0
+		and r.task_state=0
+		<if test="task_number!=null and task_number!=''">
+			and t.TASK_NUMBER like '%'||#{task_number}||'%'
+		</if>
+		<if test="receipt_type!=null and receipt_type!='' and receipt_type!=0">
+			and r.defect_id = #{receipt_type}
+		</if>
+	</select>
+	<select id="getTasks" parameterType="map" resultMap="task">
+		select tt.* from (
+		select ta.*,ROWNUM R
+		from (select t.*,l.LINE_NAME
+		from TASK t INNER
+		JOIN LINE l ON t.LINE_ID=l.LINE_ID where TASK_DEL=0
+		<if test="task_number!=null and task_number!=''">
+			and TASK_NUMBER like '%'||#{task_number}||'%'
+		</if>
+		<if test="task_state!=null and task_state!='' and task_state!=0">
+			and TASK_STATIC = #{task_state}
+		</if>
+		order by
+		TASK_BEGINTIME DESC) ta ) tt
+		where R &gt; #{pi.limit1} and R
+		&lt;= #{pi.limit2}
+	</select>
+	<select id="getTasksm2" parameterType="map" resultMap="task">
+		select tt.* from (
+		select ta.*,ROWNUM R
+		from (select t.*,l.LINE_NAME
+		from TASK t INNER
+		JOIN LINE l ON t.LINE_ID=l.LINE_ID where TASK_DEL=0
+		and TASK_STATIC>1
+		<if test="task_number!=null and task_number!=''">
+			and TASK_NUMBER like '%'||#{task_number}||'%'
+		</if>
+		<if test="task_state!=null and task_state!='' and task_state!=0">
+			and TASK_STATIC = #{task_state}
+		</if>
+		order by
+		TASK_BEGINTIME DESC) ta ) tt
+		where R &gt; #{pi.limit1} and R
+		&lt;= #{pi.limit2}
+	</select>
+	<select id="getTasks3" parameterType="map" resultMap="receipt">
+		select
+		ttt.* from (
+		select tt.*,rownum ro from (
+		select
+		t.task_number,p.pole_number,d.defect_name,r.*
+		from RECEIPT r
+		inner join
+		task t on t.task_id=r.task_id
+		inner join pole p on p.pole_id=r.pole_id
+		inner join defect d on d.defect_id=r.defect_id
+		where r.receipt_type=0
+		and r.task_state=0
+		<if test="task_number!=null and task_number!=''">
+			and t.TASK_NUMBER like '%'||#{task_number}||'%'
+		</if>
+		<if test="receipt_type!=null and receipt_type!='' and receipt_type!=0">
+			and r.defect_id = #{receipt_type}
+		</if>
+		order by r.find_date desc
+		) tt ) ttt where ro &gt; #{pi.limit1} and ro
+		&lt;= #{pi.limit2}
+	</select>
+
+	<select id="getLines" resultMap="line">
+		select li.* from line li where
+		li.line_id not in(
+		select l.line_id from LINE l
+		inner join task t on
+		l.line_id=t.line_id
+		where l.pole_stop=t.task_endpole)
+	</select>
+	<select id="ckTaskNumber" parameterType="string" resultMap="task">
+		select * from task where TASK_NUMBER = #{_parameter}
+	</select>
+	<select id="ckTaskName" parameterType="string" resultMap="task">
+		select
+		* from task where TASK_NAME = #{_parameter}
+	</select>
+	<select id="selectStartPole1ByLineid" parameterType="int"
+		resultType="string">
+		select tt.pole_number from (
+		select
+		p.pole_id,p.pole_number,p.line_id,rownum r from POLE p where
+		p.line_id=#{line_id} and p.pole_id not in(
+		select t.pole_id from POLE t
+		inner join TASK ta on ta.task_id=t.task_id
+		where t.line_id=#{line_id}
+		)) tt where tt.r=1
+	</select>
+	<select id="selectStartPole2ByLineid" parameterType="int"
+		resultType="string">
+		select
+		p.pole_number from
+		(select t.*,rownum r from POLE t
+		where t.line_id=#{line_id}) p
+		where p.r=1
+	</select>
+	<select id="selectEndPoleByStartPole" parameterType="string"
+		resultType="string">
+		select pr.pole_number
+		from (select t.pole_number,rownum r
+		from POLE t where t.line_id=(select p.line_id
+		from pole p where
+		p.pole_number=#{_parameter})) pr where pr.r>(select
+		po.r
+		from (select
+		t.pole_number,rownum r
+		from POLE t where t.line_id=(select p.line_id
+		from pole p where p.pole_number=#{_parameter})
+		) po where
+		po.pole_number=#{_parameter})
+	</select>
+
+	<!-- 这是我的方法，在你这保管一下 -->
+	<select id="getTaskIdByLineId" parameterType="int" resultType="string">
+		select TASK_ID from REMOVEDEFECT where LINE_ID = #{lineId}
+	</select>
+
+	<select id="selectTaskById" parameterType="int" resultMap="task">
+		select t.*,l.* from task t inner join line l on l.line_id=t.line_id
+		where t.task_id = #{task_id}
+	</select>
+
+	<select id="getPoles" parameterType="Task" resultMap="pole">
+		select tt.*
+		from (
+		select t.*, t.rowid from POLE t where t.line_id=#{LINE_ID} and
+		t.task_id>0 order by
+		t.pole_id
+		) tt where tt.pole_id &gt;=(select
+		p.pole_id
+		from pole p where
+		p.pole_number =#{TASK_BEGINPOLE})
+		and
+		tt.pole_id &lt;=(select p.pole_id from pole p where
+		p.pole_number=#{TASK_ENDPOLE})
+
+	</select>
+	<select id="selectReceiptByPoleNum" parameterType="string"
+		resultMap="receipt">
+		select t.*, d.defect_name,p.pole_number from RECEIPT t inner
+		join defect d on d.defect_id=t.defect_id inner join pole p on
+		p.pole_id=t.pole_id where t.pole_id=#{pole_id}
+	</select>
+	<update id="deleteTask" parameterType="string">
+		update task d set
+		d.task_del=1 where d.task_id=#{task_id}
+	</update>
+	<select id="getXunjianYuan" resultMap="users">
+		select t.* from USERS t
+		where t.role_id=5
+	</select>
+	<update id="share" parameterType="map">
+		update task t set
+		t.task_username=#{xunjianyuan},t.task_static=2 where
+		t.task_id=#{task_id}
+	</update>
+	<update id="shareZhiXing" parameterType="string">
+		update task t set
+		t.task_static=3 where
+		t.task_id=#{task_id}
+	</update>
+	<select id="getDefects" resultMap="defect">
+		select t.*, t.rowid from
+		DEFECT t order by t.defect_id
+	</select>
+	<insert id="addTask" parameterType="Task" >
+		insert into task values
+		(sq_task.nextval,#{LINE_ID},#{TASK_NUMBER},#{TASK_NAME},Sysdate,#{TASK_STATIC},#{TASK_USERNAME},0,to_date(#{TASK_ENDDATE},'yyyy-MM-dd
+		hh24:mi:ss'),#{TASK_REMARK},#{TASK_ENDPOLE},#{GIVE_USERNAME},#{TASK_BEGINPOLE},0)
+	</insert>
+	<select id="selectTaskIdByTaskNum" parameterType="string"
+		resultType="int">
+		select t.task_id from TASK t where t.task_number=#{_parameter}
+	</select>
+	<update id="updatePoleTaskid" parameterType="map">
+		update pole t set
+		t.task_id=#{task_id}
+		where t.pole_id &gt;= (select p.pole_id from pole
+		p where p.pole_number=#{BEGINPOLE})
+		and t.pole_id &lt;= (select
+		p.pole_id from pole p where p.pole_number=#{ENDPOLE})
+		and
+		t.line_id=#{line_id}
+	</update>
+
+	<resultMap type="Users" id="users">
+		<id property="USER_ID" column="USER_ID" />
+		<result property="ROLE_ID" column="ROLE_ID" />
+		<result property="USER_NAME" column="USER_NAME" />
+		<result property="USER_LOGINNAME" column="USER_LOGINNAME" />
+		<result property="USER_PASSWORD" column="USER_PASSWORD" />
+		<result property="USER_INTIME" column="USER_INTIME" />
+		<result property="USER_OUTTIME" column="USER_OUTTIME" />
+		<result property="USER_STATE" column="USER_STATE" />
+		<result property="USER_LOGINTIME" column="USER_LOGINTIME" />
+		<result property="USER_EMAIL" column="USER_EMAIL" />
+		<result property="USER_REMARK" column="USER_REMARK" />
+		<result property="USER_AGE" column="USER_AGE" />
+		<result property="USER_PHONE" column="USER_PHONE" />
+		<result property="USER_SEX" column="USER_SEX" />
+		<result property="USER_DEL" column="USER_DEL" />
+	</resultMap>
+	<resultMap type="Receipt" id="receipt">
+		<id property="receipt_id" column="RECEIPT_ID" />
+		<result property="defect_id" column="DEFECT_ID" />
+		<result property="pole_id" column="POLE_ID" />
+		<result property="find_username" column="FIND_USERNAME" />
+		<result property="find_date" column="FIND_DATE" />
+		<result property="defect_desc" column="DEFECT_DESC" />
+		<result property="defect_level" column="DEFECT_LEVEL" />
+		<result property="task_id" column="TASK_ID" />
+		<result property="req" column="REQ" />
+		<result property="remove_id" column="REMOVE_ID" />
+		<result property="line_number" column="LINE_NUMBER" />
+		<result property="task_begaindate" column="TASK_BEGAINDATE" />
+		<result property="task_state" column="TASK_STATE" />
+		<result property="receipt_type" column="RECEIPT_TYPE" />
+		<result property="giveusername" column="GIVEUSERNAME" />
+		<association property="pole" javaType="Pole" resultMap="pole"></association>
+		<association property="defects" javaType="Defect"
+			resultMap="defect"></association>
+		<association property="task" javaType="Task" resultMap="task"></association>
+	</resultMap>
+
+
+	<resultMap type="Defect" id="defect">
+		<id property="DEFECT_ID" column="DEFECT_ID" />
+		<result property="DEFECT_NAME" column="DEFECT_NAME" />
+		<result property="DEFECT_STATE" column="DEFECT_STATE" />
+	</resultMap>
+	<resultMap type="Pole" id="pole">
+		<id property="POLE_ID" column="POLE_ID" />
+		<result property="LINE_ID" column="LINE_ID" />
+		<result property="POLE_NUMBER" column="POLE_NUMBER" />
+		<result property="TASK_ID" column="TASK_ID" />
+		<association property="line" javaType="Line" resultMap="line"></association>
+		<association property="task" javaType="Task" resultMap="task"></association>
+	</resultMap>
+	<resultMap type="Task" id="task">
+		<id property="TASK_ID" column="TASK_ID" />
+		<result property="LINE_ID" column="LINE_ID" />
+		<result property="TASK_NUMBER" column="TASK_NUMBER" />
+		<result property="TASK_NAME" column="TASK_NAME" />
+		<result property="TASK_BEGINTIME" column="TASK_BEGINTIME" />
+		<result property="TASK_STATIC" column="TASK_STATIC" />
+		<result property="TASK_USERNAME" column="TASK_USERNAME" />
+		<result property="TASK_DEL" column="TASK_DEL" />
+		<result property="TASK_ENDDATE" column="TASK_ENDDATE" />
+		<result property="TASK_REMARK" column="TASK_REMARK" />
+		<result property="TASK_ENDPOLE" column="TASK_ENDPOLE" />
+		<result property="GIVE_USERNAME" column="GIVE_USERNAME" />
+		<result property="TASK_BEGINPOLE" column="TASK_BEGINPOLE" />
+		<result property="TASK_STATE" column="TASK_STATE" />
+		<association property="line" javaType="Line" resultMap="line"></association>
+	</resultMap>
+	<resultMap type="Line" id="line">
+		<id property="lineId" column="LINE_ID" />
+		<result property="lineNumber" column="LINE_NUMBER" />
+		<result property="lineName" column="LINE_NAME" />
+		<result property="lineLength" column="LINE_LENGTH" />
+		<result property="lineDate" column="LINE_DATE" />
+		<result property="lineVoltage" column="LINE_VOLTAGE" />
+		<result property="lineStatic" column="LINE_STATIC" />
+		<result property="lineRemark" column="LINE_REMARK" />
+		<result property="poleStar" column="POLE_STAR" />
+		<result property="poleStop" column="POLE_STOP" />
+		<result property="lineState" column="LINE_STATE" />
+		<result property="length" column="LENGTH" />
+		<result property="lineDel" column="LINE_DEL" />
+		<result property="lineCreatedate" column="LINE_CREATEDATE" />
+	</resultMap>
+</mapper>
+
